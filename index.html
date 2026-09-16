@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>Absensi Ibadah | SMAN 1 Kota Gajah</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img id="sidebarLogo" alt="Logo sekolah" hidden><span id="brandFallback">S1</span></div>
+        <div>
+          <strong id="brandSchool">SMAN 1 Kota Gajah</strong>
+          <small>Absensi Ibadah</small>
+        </div>
+      </div>
+      <nav class="nav-list" id="navList">
+        <button class="nav-item active" data-page="dashboard">⌂ <span>Dashboard</span></button>
+        <button class="nav-item" data-page="students">♟ <span>Data Siswa</span></button>
+        <button class="nav-item" data-page="attendance">▣ <span>Absen Ibadah</span></button>
+        <button class="nav-item" data-page="recap">▤ <span>Rekap Absen</span></button>
+        <button class="nav-item" data-page="charts">◒ <span>Grafik</span></button>
+        <button class="nav-item" data-page="settings">⚙ <span>Setting</span></button>
+      </nav>
+      <div class="sidebar-foot">
+        <span class="status-dot"></span><span>Google Sheets API</span>
+        <small id="apiState">Belum dikonfigurasi</small>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Buka menu">☰</button>
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="todayLabel"></p>
+        </div>
+        <div class="top-actions">
+          <button class="btn ghost" id="refreshBtn">↻ Refresh</button>
+          <div class="avatar">AI</div>
+        </div>
+      </header>
+
+      <section class="page active" id="page-dashboard">
+        <div class="hero-card">
+          <div>
+            <span class="eyebrow">SISTEM ABSENSI IBADAH</span>
+            <h2 id="heroSchool">SMAN 1 Kota Gajah</h2>
+            <p>Monitoring kehadiran ibadah siswa secara real-time, ringkas, dan terhubung ke Google Sheets.</p>
+          </div>
+          <div class="hero-mark">✓</div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-icon teal">♟</div><div><small>Jumlah Siswa</small><strong id="statStudents">0</strong><span>data aktif</span></div></article>
+          <article class="stat-card"><div class="stat-icon blue">✓</div><div><small>Absen Hari Ini</small><strong id="statToday">0</strong><span>entri</span></div></article>
+          <article class="stat-card"><div class="stat-icon amber">7</div><div><small>Minggu Ini</small><strong id="statWeek">0</strong><span>entri</span></div></article>
+          <article class="stat-card"><div class="stat-icon violet">30</div><div><small>Bulan Ini</small><strong id="statMonth">0</strong><span>entri</span></div></article>
+          <article class="stat-card"><div class="stat-icon rose">S</div><div><small>Semester Ini</small><strong id="statSemester">0</strong><span>entri</span></div></article>
+        </div>
+
+        <div class="two-col">
+          <article class="panel">
+            <div class="panel-head"><div><h3>Rekap Hari Ini</h3><p>Jumlah kehadiran per ibadah</p></div><span class="pill" id="dashboardDate"></span></div>
+            <div id="todayWorshipList" class="worship-summary"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><h3>Aktivitas Terbaru</h3><p>10 absensi terakhir</p></div></div>
+            <div class="table-wrap compact"><table><thead><tr><th>Waktu</th><th>Nama</th><th>Kelas</th><th>Ibadah</th></tr></thead><tbody id="recentAttendanceBody"></tbody></table></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-students">
+        <article class="panel">
+          <div class="panel-head wrap">
+            <div><h3>Data Siswa</h3><p>Maksimal direkomendasikan 2.000 siswa.</p></div>
+            <div class="button-row">
+              <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" hidden>
+              <button class="btn secondary" id="downloadTemplateBtn">↓ Template Excel</button>
+              <button class="btn secondary" id="uploadExcelBtn">↑ Upload Excel</button>
+              <button class="btn secondary" id="downloadClassQrBtn">⇩ QR per Kelas</button>
+              <button class="btn primary" id="printQrBtn">▧ Cetak Kartu QR</button>
+              <button class="btn dark" id="addStudentBtn">＋ Tambah Siswa</button>
+            </div>
+          </div>
+          <div class="filterbar">
+            <label class="search-box">⌕ <input id="studentSearch" placeholder="Cari NIS/NISN, nama, kelas..."></label>
+            <select id="studentClassFilter"><option value="">Semua kelas</option></select>
+            <span class="counter" id="studentCounter">0 siswa</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>NIS/NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Jenis Kelamin</th><th>QR SVG</th><th>Aksi</th></tr></thead>
+              <tbody id="studentsBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination"><button class="btn ghost" id="prevStudentPage">← Sebelumnya</button><span id="studentPageInfo">1 / 1</span><button class="btn ghost" id="nextStudentPage">Berikutnya →</button></div>
+        </article>
+      </section>
+
+      <section class="page" id="page-attendance">
+        <div class="attendance-layout">
+          <article class="panel scan-panel">
+            <div class="panel-head"><div><h3>Scan QR Siswa</h3><p>Pilih jenis ibadah, lalu arahkan QR ke kamera.</p></div></div>
+            <div class="worship-grid" id="worshipButtons"></div>
+            <div class="selected-worship">Ibadah dipilih: <strong id="selectedWorship">Belum dipilih</strong></div>
+            <div id="qrReader" class="qr-reader"><div class="camera-placeholder"><div class="scan-frame"></div><p>Kamera belum aktif</p></div></div>
+            <div class="button-row center"><button class="btn primary" id="startScanBtn">▣ Mulai Scan</button><button class="btn secondary" id="stopScanBtn" disabled>■ Stop Kamera</button></div>
+            <div class="manual-scan"><span>atau input NIS/NISN manual</span><div><input id="manualNis" placeholder="Masukkan NIS/NISN"><button class="btn dark" id="manualAttendBtn">Absen</button></div></div>
+          </article>
+          <article class="panel result-panel">
+            <div class="panel-head"><div><h3>Status Absensi</h3><p>Hasil scan terakhir</p></div></div>
+            <div id="attendanceResult" class="attendance-result empty"><div class="big-icon">⌁</div><h3>Belum ada scan</h3><p>Data siswa akan muncul di sini setelah QR dipindai.</p></div>
+            <div class="notice"><strong>Aturan duplikat</strong><p>Satu siswa hanya dapat tercatat <b>1x untuk jenis ibadah yang sama pada tanggal yang sama</b>. Pengecekan dilakukan di server agar aman meskipun beberapa perangkat dipakai bersamaan.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-recap">
+        <article class="panel">
+          <div class="panel-head wrap"><div><h3>Rekap Absensi</h3><p>Filter harian, mingguan, bulanan, atau semesteran.</p></div><button class="btn primary" id="printPdfBtn">▤ Cetak PDF</button></div>
+          <div class="filterbar multi">
+            <select id="recapPeriod"><option value="daily">Harian</option><option value="weekly">Mingguan</option><option value="monthly">Bulanan</option><option value="semester">Semesteran</option></select>
+            <input type="date" id="recapDate">
+            <select id="recapWorship"><option value="">Semua ibadah</option></select>
+            <select id="recapClass"><option value="">Semua kelas</option></select>
+            <button class="btn dark" id="loadRecapBtn">Tampilkan</button>
+          </div>
+          <div class="recap-kpis"><span>Total: <strong id="recapTotal">0</strong></span><span>Siswa unik: <strong id="recapUnique">0</strong></span><span>Rentang: <strong id="recapRange">-</strong></span></div>
+          <div class="table-wrap"><table><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>NIS/NISN</th><th>Nama</th><th>Kelas</th><th>JK</th><th>Ibadah</th></tr></thead><tbody id="recapBody"></tbody></table></div>
+        </article>
+      </section>
+
+      <section class="page" id="page-charts">
+        <article class="panel">
+          <div class="panel-head wrap"><div><h3>Grafik Kehadiran</h3><p>Visualisasi data berdasarkan periode.</p></div><div class="button-row"><select id="chartPeriod"><option value="daily">Harian</option><option value="weekly">Mingguan</option><option value="monthly">Bulanan</option><option value="semester">Semesteran</option></select><input type="date" id="chartDate"><button class="btn dark" id="loadChartBtn">Muat Grafik</button></div></div>
+          <div class="chart-card"><canvas id="attendanceChart"></canvas></div>
+          <div class="chart-card"><canvas id="worshipChart"></canvas></div>
+        </article>
+      </section>
+
+      <section class="page" id="page-settings">
+        <div class="settings-grid">
+          <article class="panel">
+            <div class="panel-head"><div><h3>Identitas Sekolah</h3><p>Digunakan pada header dan laporan PDF.</p></div></div>
+            <div class="form-grid">
+              <label>Nama Sekolah<input id="settingSchool" value="SMAN 1 Kota Gajah"></label>
+              <label>Nama Kepala Sekolah<input id="settingPrincipal" placeholder="Nama kepala sekolah"></label>
+              <label>NIP Kepala Sekolah<input id="settingPrincipalNip" placeholder="NIP"></label>
+            </div>
+            <label class="upload-logo">Logo Sekolah (JPG/PNG)<input type="file" id="logoInput" accept="image/png,image/jpeg"><div class="logo-preview"><img id="logoPreview" hidden><span id="logoPlaceholder">Klik untuk memilih logo</span></div></label>
+          </article>
+          <article class="panel">
+            <div class="panel-head wrap"><div><h3>Data Guru</h3><p>Dapat ditambah lebih dari 5 guru.</p></div><button class="btn secondary" id="addTeacherBtn">＋ Tambah Guru</button></div>
+            <div id="teachersList" class="teachers-list"></div>
+          </article>
+          <article class="panel api-panel">
+            <div class="panel-head"><div><h3>Koneksi Google Apps Script</h3><p>URL Web App hasil Deploy → New deployment.</p></div></div>
+            <label>Apps Script Web App URL<input id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfy.../exec"></label>
+            <div class="button-row"><button class="btn secondary" id="testApiBtn">Tes Koneksi</button><button class="btn primary" id="saveSettingsBtn">Simpan Setting</button></div>
+            <small>URL disimpan pada browser perangkat ini (localStorage). Setting sekolah/guru/logo disimpan ke Google Sheets setelah koneksi aktif.</small>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="studentModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head"><h3 id="studentModalTitle">Tambah Siswa</h3><button class="icon-btn" data-close-modal>×</button></div>
+      <form id="studentForm">
+        <input id="studentOriginalNis" type="hidden">
+        <label>NIS/NISN<input id="studentNis" required></label>
+        <label>Nama Siswa<input id="studentName" required></label>
+        <label>Kelas<input id="studentClass" required placeholder="Contoh: XI IPA 1"></label>
+        <label>Jenis Kelamin<select id="studentGender" required><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></label>
+        <div class="modal-actions"><button type="button" class="btn secondary" data-close-modal>Batal</button><button type="submit" class="btn primary">Simpan</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="classQrModal" aria-hidden="true">
+    <div class="modal-card small">
+      <div class="modal-head"><h3>Download QR per Kelas</h3><button class="icon-btn" data-close-modal>×</button></div>
+      <label>Pilih Kelas<select id="qrClassSelect"></select></label>
+      <p class="muted">Semua QR akan dibuat dalam format <b>SVG</b> dan dikemas menjadi file ZIP.</p>
+      <div class="modal-actions"><button class="btn secondary" data-close-modal>Batal</button><button class="btn primary" id="confirmClassQrBtn">Download ZIP SVG</button></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p id="loadingText">Memproses...</p></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
