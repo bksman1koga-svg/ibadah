@@ -1,16 +1,16 @@
-const WORSHIPS = ['Duha','Dhuhur','Jumat','Rohin','Rokat','Rokris'];
+const WORSHIPS = ['Duha','Dhuhur','Jumat','Rohin','Rokat','Rokris','Tarbiyah'];
 const state = {
   apiUrl: localStorage.getItem('absensi_api_url') || '',
   students: [], filteredStudents: [], studentPage: 1, pageSize: 25,
   selectedWorship: '', scanner: null, scanning: false, scanLocked: false,
-  settings: { school:'SMAN 1 Kota Gajah', principal:'', principalNip:'', teachers:[], logo:'' },
+  settings: { school:'SMAN 1 Kota Gajah', principal:'', principalNip:'', teachers:[], selectedTeacher:{name:'',nip:''}, logo:'', principalSignature:'', teacherSignature:'' },
   recap: [], charts: []
 };
 const $ = (id) => document.getElementById(id);
 const qs = (s, root=document) => root.querySelector(s);
 const qsa = (s, root=document) => [...root.querySelectorAll(s)];
 const esc = (v='') => String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const fmtDate = (d=new Date()) => new Intl.DateTimeFormat('id-ID',{dateStyle:'full'}).format(d);
+const fmtDate = (d=new Date()) => new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'long',year:'numeric'}).format(d);
 const isoDate = (d=new Date()) => { const x=new Date(d.getTime()-d.getTimezoneOffset()*60000); return x.toISOString().slice(0,10); };
 
 function toast(message,type='success'){ const el=document.createElement('div'); el.className=`toast ${type}`; el.textContent=message; $('toastContainer').appendChild(el); setTimeout(()=>el.remove(),3500); }
@@ -49,6 +49,7 @@ async function loadDashboard(silent=false){
   if(!state.apiUrl) return updateApiStatus(false);
   try{ if(!silent) loading(true,'Memuat dashboard...'); const r=await api('getDashboard'); const d=r.data;
     $('statStudents').textContent=d.totalStudents||0; $('statToday').textContent=d.today||0; $('statWeek').textContent=d.week||0; $('statMonth').textContent=d.month||0; $('statSemester').textContent=d.semester||0;
+    $('dashboardDate').textContent=fmtDate(new Date());
     const max=Math.max(1,...Object.values(d.todayByWorship||{}));
     $('todayWorshipList').innerHTML=WORSHIPS.map(w=>`<div class="worship-line"><b>${w}</b><div class="bar"><i style="width:${((d.todayByWorship?.[w]||0)/max)*100}%"></i></div><strong>${d.todayByWorship?.[w]||0}</strong></div>`).join('');
     $('recentAttendanceBody').innerHTML=(d.recent||[]).map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.name)}</td><td>${esc(x.className)}</td><td><span class="badge">${esc(x.worship)}</span></td></tr>`).join('') || '<tr><td colspan="4">Belum ada data.</td></tr>';
@@ -130,8 +131,24 @@ async function loadRecap(){
   catch(e){toast(e.message,'error');}finally{loading(false);}
 }
 function printRecapPdf(){
-  if(!state.recap.length)return toast('Tampilkan rekap terlebih dahulu.','error'); const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}); doc.setFontSize(15);doc.text(`Rekap Absensi Ibadah - ${state.settings.school}`,14,14);doc.setFontSize(9);doc.text(`Periode: ${$('recapRange').textContent} | Dicetak: ${new Date().toLocaleString('id-ID')}`,14,20);
-  doc.autoTable({startY:25,head:[['No','Tanggal','Waktu','NIS/NISN','Nama','Kelas','JK','Ibadah']],body:state.recap.map((x,i)=>[i+1,x.date,x.time,x.nis,x.name,x.className,x.gender,x.worship]),styles:{fontSize:7},headStyles:{fillColor:[15,118,110]}}); const finalY=doc.lastAutoTable.finalY+12;doc.setFontSize(9);doc.text(`Kepala Sekolah: ${state.settings.principal||'-'} | NIP: ${state.settings.principalNip||'-'}`,14,Math.min(finalY,195));doc.save(`Rekap_Absensi_${isoDate()}.pdf`);
+  if(!state.recap.length)return toast('Tampilkan rekap terlebih dahulu.','error');
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  doc.setFontSize(15);doc.text(`Rekap Absensi Ibadah - ${state.settings.school}`,14,14);
+  doc.setFontSize(9);doc.text(`Periode: ${$('recapRange').textContent} | Dicetak: ${fmtDate()} ${new Date().toLocaleTimeString('id-ID',{hour12:false})}`,14,20);
+  doc.autoTable({startY:25,head:[['No','Tanggal','Waktu','NIS/NISN','Nama','Kelas','JK','Ibadah']],body:state.recap.map((x,i)=>[i+1,x.date,x.time,x.nis,x.name,x.className,x.gender,x.worship]),styles:{fontSize:7},headStyles:{fillColor:[15,118,110]},margin:{left:14,right:14,bottom:48}});
+  let finalY=doc.lastAutoTable.finalY;
+  if(finalY>148){doc.addPage();finalY=20;}
+  const yLabel=170,yLine=190,yName=196,yNip=202;
+  const leftX=20,rightX=225;
+  doc.setFontSize(10);doc.text('Kepala Sekolah',leftX,yLabel);doc.text('Guru Agama',rightX,yLabel);
+  const sigH=18,sigW=55;
+  if(state.settings.principalSignature){try{doc.addImage(state.settings.principalSignature,'PNG',leftX,yLine-sigH-2,sigW,sigH,undefined,'FAST');}catch(e){}}
+  if(state.settings.teacherSignature){try{doc.addImage(state.settings.teacherSignature,'PNG',rightX,yLine-sigH-2,sigW,sigH,undefined,'FAST');}catch(e){}}
+  doc.setDrawColor(90,110,108);doc.line(leftX,yLine,leftX+55,yLine);doc.line(rightX,yLine,rightX+55,yLine);
+  doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text(state.settings.principal||'-',leftX,yName);doc.text(state.settings.selectedTeacher?.name||'-',rightX,yName);doc.setFont(undefined,'normal');
+  doc.text(`NIP. ${state.settings.principalNip||'-'}`,leftX,yNip);doc.text(`NIP. ${state.settings.selectedTeacher?.nip||'-'}`,rightX,yNip);
+  doc.save(`Rekap_Absensi_${isoDate()}.pdf`);
 }
 
 let attendanceChart=null,worshipChart=null;
@@ -143,20 +160,28 @@ async function loadCharts(){
   }catch(e){toast(e.message,'error');}finally{loading(false);}
 }
 
-function addTeacherRow(t={name:'',nip:''}){ const row=document.createElement('div');row.className='teacher-row';row.innerHTML=`<input class="teacher-name" placeholder="Nama guru" value="${esc(t.name)}"><input class="teacher-nip" placeholder="NIP" value="${esc(t.nip)}"><button class="btn danger" type="button">Hapus</button>`;row.querySelector('button').onclick=()=>row.remove();$('teachersList').appendChild(row); }
-function fillSettingsForm(){ $('apiUrlInput').value=state.apiUrl;$('settingSchool').value=state.settings.school||'';$('settingPrincipal').value=state.settings.principal||'';$('settingPrincipalNip').value=state.settings.principalNip||'';$('teachersList').innerHTML='';(state.settings.teachers?.length?state.settings.teachers:[{name:'',nip:''}]).forEach(addTeacherRow); if(state.settings.logo){$('logoPreview').src=state.settings.logo;$('logoPreview').hidden=false;$('logoPlaceholder').hidden=true;} }
+function addTeacherRow(t={name:'',nip:''}){ const row=document.createElement('div');row.className='teacher-row';row.innerHTML=`<input class="teacher-name" placeholder="Nama guru" value="${esc(t.name)}"><input class="teacher-nip" placeholder="NIP" value="${esc(t.nip)}"><button class="btn danger" type="button">Hapus</button>`;row.querySelector('button').onclick=()=>{row.remove();refreshTeacherSelect();};$('teachersList').appendChild(row);refreshTeacherSelect(); }
+function refreshTeacherSelect(){ const sel=$('settingTeacherSelect'); if(!sel)return; const current=state.settings.selectedTeacher?.name||''; const teachers=qsa('.teacher-row').map(r=>({name:qs('.teacher-name',r).value.trim(),nip:qs('.teacher-nip',r).value.trim()})).filter(t=>t.name||t.nip); sel.innerHTML='<option value="">Pilih guru agama</option>'+teachers.map((t,i)=>`<option value="${i}">${esc(t.name||t.nip)}</option>`).join(''); const idx=teachers.findIndex(t=>t.name===current); if(idx>=0)sel.value=String(idx); else if(teachers.length===1)sel.value='0'; }
+function fillSettingsForm(){
+  $('apiUrlInput').value=state.apiUrl;$('settingSchool').value=state.settings.school||'';$('settingPrincipal').value=state.settings.principal||'';$('settingPrincipalNip').value=state.settings.principalNip||'';
+  $('teachersList').innerHTML='';(state.settings.teachers?.length?state.settings.teachers:[{name:'',nip:''}]).forEach(addTeacherRow);refreshTeacherSelect();
+  if(state.settings.logo){$('logoPreview').src=state.settings.logo;$('logoPreview').hidden=false;$('logoPlaceholder').hidden=true;}
+  if(state.settings.principalSignature){$('principalSignatureImg').src=state.settings.principalSignature;$('principalSignatureImg').hidden=false;$('principalSignaturePlaceholder').hidden=true;}
+  if(state.settings.teacherSignature){$('teacherSignatureImg').src=state.settings.teacherSignature;$('teacherSignatureImg').hidden=false;$('teacherSignaturePlaceholder').hidden=true;}
+}
 function applySchoolBrand(){ const s=state.settings.school||'SMAN 1 Kota Gajah';$('brandSchool').textContent=s;$('heroSchool').textContent=s;if(state.settings.logo){$('sidebarLogo').src=state.settings.logo;$('sidebarLogo').hidden=false;$('brandFallback').hidden=true;} }
-async function readLogo(file){ if(!file)return ''; if(file.size>2*1024*1024)throw new Error('Logo maksimal 2 MB.'); const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)}); return await resizeImage(data,320,320,.82); }
-function resizeImage(src,maxW,maxH,quality){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;const scale=Math.min(1,maxW/w,maxH/h);w=Math.round(w*scale);h=Math.round(h*scale);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);res(c.toDataURL('image/jpeg',quality));};img.onerror=rej;img.src=src;});}
+async function readLogo(file){ if(!file)return ''; if(file.size>2*1024*1024)throw new Error('Logo maksimal 2 MB.'); const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)}); return await resizeImage(data,320,320,.82,'image/jpeg'); }
+async function readSignature(file){ if(!file)return ''; if(file.size>2*1024*1024)throw new Error('File TTD maksimal 2 MB.'); const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)}); return await resizeImage(data,500,180,.9,'image/png'); }
+function resizeImage(src,maxW,maxH,quality,mime='image/jpeg'){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;const scale=Math.min(1,maxW/w,maxH/h);w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.clearRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);res(c.toDataURL(mime,quality));};img.onerror=rej;img.src=src;});}
 async function saveSettings(){
   const url=$('apiUrlInput').value.trim(); if(!/^https:\/\/script\.google\.com\//.test(url))return toast('Masukkan URL Web App Google Apps Script yang valid.','error'); state.apiUrl=url; localStorage.setItem('absensi_api_url',url);
-  const teachers=qsa('.teacher-row').map(r=>({name:qs('.teacher-name',r).value.trim(),nip:qs('.teacher-nip',r).value.trim()})).filter(t=>t.name||t.nip); const file=$('logoInput').files[0]; let logo=state.settings.logo||'';
-  try{loading(true,'Menyimpan setting...');if(file)logo=await readLogo(file);const settings={school:$('settingSchool').value.trim()||'SMAN 1 Kota Gajah',principal:$('settingPrincipal').value.trim(),principalNip:$('settingPrincipalNip').value.trim(),teachers,logo};await api('saveSettings',settings);state.settings=settings;applySchoolBrand();updateApiStatus(true);toast('Setting berhasil disimpan.');}
-  catch(e){toast(e.message,'error');updateApiStatus(false);}finally{loading(false);}
+  const teachers=qsa('.teacher-row').map(r=>({name:qs('.teacher-name',r).value.trim(),nip:qs('.teacher-nip',r).value.trim()})).filter(t=>t.name||t.nip); const selectedIndex=$('settingTeacherSelect').value; const selectedTeacher=selectedIndex!==''&&teachers[Number(selectedIndex)]?teachers[Number(selectedIndex)]:{name:'',nip:''};
+  const logoFile=$('logoInput').files[0],principalSigFile=$('principalSignatureInput').files[0],teacherSigFile=$('teacherSignatureInput').files[0]; let logo=state.settings.logo||'',principalSignature=state.settings.principalSignature||'',teacherSignature=state.settings.teacherSignature||'';
+  try{loading(true,'Menyimpan setting...');if(logoFile)logo=await readLogo(logoFile);if(principalSigFile)principalSignature=await readSignature(principalSigFile);if(teacherSigFile)teacherSignature=await readSignature(teacherSigFile);
+    const settings={school:$('settingSchool').value.trim()||'SMAN 1 Kota Gajah',principal:$('settingPrincipal').value.trim(),principalNip:$('settingPrincipalNip').value.trim(),teachers,selectedTeacher,logo,principalSignature,teacherSignature};
+    await api('saveSettings',settings);state.settings=settings;applySchoolBrand();updateApiStatus(true);toast('Setting berhasil disimpan.');
+  }catch(e){toast(e.message,'error');updateApiStatus(false);}finally{loading(false);}
 }
-async function testApi(){ const url=$('apiUrlInput').value.trim(); if(!url)return toast('Isi URL Web App.','error'); const old=state.apiUrl;state.apiUrl=url;try{loading(true,'Menguji koneksi...');const r=await api('ping');toast(`Terhubung: ${r.data.spreadsheetName}`);localStorage.setItem('absensi_api_url',url);updateApiStatus(true);}catch(e){state.apiUrl=old;toast(e.message,'error');updateApiStatus(false);}finally{loading(false);} }
-function updateApiStatus(ok){ const dot=qs('.status-dot');dot.classList.toggle('online',ok);$('apiState').textContent=ok?'Terhubung':'Belum terhubung'; }
-
 function openModal(id){$(id).classList.add('open');$(id).setAttribute('aria-hidden','false');} function closeModal(id){$(id).classList.remove('open');$(id).setAttribute('aria-hidden','true');}
 function bindEvents(){
   qsa('.nav-item').forEach(b=>b.onclick=()=>navigate(b.dataset.page));$('menuToggle').onclick=()=>$('sidebar').classList.toggle('open');$('refreshBtn').onclick=()=>loadDashboard();
@@ -167,10 +192,10 @@ function bindEvents(){
   $('downloadClassQrBtn').onclick=()=>{if(!state.students.length)return toast('Muat data siswa terlebih dahulu.','error');openModal('classQrModal');};$('confirmClassQrBtn').onclick=downloadClassQr;$('printQrBtn').onclick=printAllCards;
   $('startScanBtn').onclick=startScanner;$('stopScanBtn').onclick=stopScanner;$('manualAttendBtn').onclick=()=>{const nis=$('manualNis').value.trim();submitAttendance(nis);$('manualNis').value='';};$('manualNis').addEventListener('keydown',e=>{if(e.key==='Enter')$('manualAttendBtn').click()});
   $('loadRecapBtn').onclick=loadRecap;$('printPdfBtn').onclick=printRecapPdf;$('loadChartBtn').onclick=loadCharts;
-  $('addTeacherBtn').onclick=()=>addTeacherRow();$('saveSettingsBtn').onclick=saveSettings;$('testApiBtn').onclick=testApi;$('logoInput').onchange=async e=>{try{const data=await readLogo(e.target.files[0]);$('logoPreview').src=data;$('logoPreview').hidden=false;$('logoPlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};
+  $('addTeacherBtn').onclick=()=>addTeacherRow();$('teachersList').addEventListener('input',refreshTeacherSelect);$('saveSettingsBtn').onclick=saveSettings;$('testApiBtn').onclick=testApi;$('logoInput').onchange=async e=>{try{const data=await readLogo(e.target.files[0]);$('logoPreview').src=data;$('logoPreview').hidden=false;$('logoPlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};$('principalSignatureInput').onchange=async e=>{try{const data=await readSignature(e.target.files[0]);$('principalSignatureImg').src=data;$('principalSignatureImg').hidden=false;$('principalSignaturePlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};$('teacherSignatureInput').onchange=async e=>{try{const data=await readSignature(e.target.files[0]);$('teacherSignatureImg').src=data;$('teacherSignatureImg').hidden=false;$('teacherSignaturePlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};
 }
 
 document.addEventListener('DOMContentLoaded',async()=>{
-  $('todayLabel').textContent=fmtDate();$('dashboardDate').textContent=isoDate();$('recapDate').value=isoDate();$('chartDate').value=isoDate();renderWorshipButtons();bindEvents();applySchoolBrand();fillSettingsForm();
+  $('todayLabel').textContent=fmtDate();$('dashboardDate').textContent=fmtDate();$('recapDate').value=isoDate();$('chartDate').value=isoDate();renderWorshipButtons();bindEvents();applySchoolBrand();fillSettingsForm();
   if(state.apiUrl){ await loadDashboard(); setInterval(()=>{ if(document.visibilityState==='visible')loadDashboard(true); },30000); }
 });

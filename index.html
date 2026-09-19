@@ -154,8 +154,13 @@
               <label>Nama Sekolah<input id="settingSchool" value="SMAN 1 Kota Gajah"></label>
               <label>Nama Kepala Sekolah<input id="settingPrincipal" placeholder="Nama kepala sekolah"></label>
               <label>NIP Kepala Sekolah<input id="settingPrincipalNip" placeholder="NIP"></label>
+              <label>Guru Agama untuk Laporan<select id="settingTeacherSelect"><option value="">Pilih guru agama</option></select></label>
             </div>
             <label class="upload-logo">Logo Sekolah (JPG/PNG)<input type="file" id="logoInput" accept="image/png,image/jpeg"><div class="logo-preview"><img id="logoPreview" hidden><span id="logoPlaceholder">Klik untuk memilih logo</span></div></label>
+            <div class="signature-upload-grid">
+              <label>TTD Kepala Sekolah (PNG/JPG)<input type="file" id="principalSignatureInput" accept="image/png,image/jpeg"><div class="signature-preview" id="principalSignaturePreview"><span id="principalSignaturePlaceholder">Upload TTD Kepala Sekolah</span><img id="principalSignatureImg" hidden></div></label>
+              <label>TTD Guru Agama (PNG/JPG)<input type="file" id="teacherSignatureInput" accept="image/png,image/jpeg"><div class="signature-preview" id="teacherSignaturePreview"><span id="teacherSignaturePlaceholder">Upload TTD Guru Agama</span><img id="teacherSignatureImg" hidden></div></label>
+            </div>
           </article>
           <article class="panel">
             <div class="panel-head wrap"><div><h3>Data Guru</h3><p>Dapat ditambah lebih dari 5 guru.</p></div><button class="btn secondary" id="addTeacherBtn">＋ Tambah Guru</button></div>
