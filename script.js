@@ -16,6 +16,29 @@ const isoDate = (d=new Date()) => { const x=new Date(d.getTime()-d.getTimezoneOf
 function toast(message,type='success'){ const el=document.createElement('div'); el.className=`toast ${type}`; el.textContent=message; $('toastContainer').appendChild(el); setTimeout(()=>el.remove(),3500); }
 function loading(show,text='Memproses...'){ $('loadingText').textContent=text; $('loadingOverlay').classList.toggle('show',show); }
 function requireApi(){ if(!state.apiUrl){ toast('Isi URL Google Apps Script pada menu Setting terlebih dahulu.','error'); navigate('settings'); return false; } return true; }
+function updateApiStatus(connected){
+  const text = $('apiState');
+  const dot = qs('.status-dot');
+  if(!text) return;
+  text.textContent = connected ? 'Terhubung' : (state.apiUrl ? 'Tidak terhubung' : 'Belum dikonfigurasi');
+  if(dot){ dot.classList.toggle('online', !!connected); dot.classList.toggle('offline', !connected); }
+}
+async function testApi(){
+  const url = $('apiUrlInput')?.value.trim() || state.apiUrl;
+  if(!/^https:\/\/script\.google\.com\//.test(url)) return toast('Masukkan URL Web App Google Apps Script yang valid.','error');
+  const old = state.apiUrl;
+  state.apiUrl = url;
+  try{
+    loading(true,'Menguji koneksi Google Sheets...');
+    const r = await api('ping');
+    updateApiStatus(true);
+    toast('Koneksi berhasil: '+(r.data?.spreadsheetName || 'Google Sheets terhubung.'));
+  }catch(e){
+    state.apiUrl = old;
+    updateApiStatus(false);
+    toast('Koneksi gagal: '+e.message,'error');
+  }finally{ loading(false); }
+}
 async function api(action,payload={}){
   if(!requireApi()) throw new Error('API belum dikonfigurasi');
   const body = new URLSearchParams({ action, payload: JSON.stringify(payload) });
