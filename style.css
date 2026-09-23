@@ -6,3 +6,19 @@
 @media print{body{background:#fff}.sidebar,.topbar,.button-row,.filterbar,.pagination{display:none!important}.main-area{margin:0}.page{display:none!important}.page.printing{display:block!important;padding:0}.panel{border:0;box-shadow:none}.table-wrap{overflow:visible;border:0}table{min-width:0}th{position:static}}
 
 .signature-upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}.signature-upload-grid input{display:none}.signature-preview{height:110px;border:1px dashed #b9cfcc;border-radius:14px;display:grid;place-items:center;color:var(--muted);overflow:hidden;cursor:pointer;background:#fbfdfd}.signature-preview img{max-width:90%;max-height:95px;object-fit:contain}.report-signature-preview{max-width:100%}@media(max-width:700px){.signature-upload-grid{grid-template-columns:1fr}}
+
+.hafalan-filters{align-items:center}.hafalan-filters select,.hafalan-filters input{min-width:150px}.hafalan-filters #hafalanStudent{min-width:230px}.hafalan-filters #hafalanSetoran{min-width:300px}
+@media(max-width:800px){.hafalan-filters select,.hafalan-filters input{width:100%;min-width:0}.hafalan-filters .btn{width:100%}}
+
+
+/* Creator credit */
+.sidebar-foot .creator-credit {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.12);
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: .78;
+}
