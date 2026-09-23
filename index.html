@@ -26,11 +26,13 @@
         <button class="nav-item" data-page="attendance">▣ <span>Absen Ibadah</span></button>
         <button class="nav-item" data-page="recap">▤ <span>Rekap Absen</span></button>
         <button class="nav-item" data-page="charts">◒ <span>Grafik</span></button>
+        <button class="nav-item" data-page="hafalan">▥ <span>Laporan Hafalan</span></button>
         <button class="nav-item" data-page="settings">⚙ <span>Setting</span></button>
       </nav>
       <div class="sidebar-foot">
         <span class="status-dot"></span><span>Google Sheets API</span>
         <small id="apiState">Belum dikonfigurasi</small>
+        <small class="creator-credit">Created by Akhmad Khafidz K., S.Pd., Gr.</small>
       </div>
     </aside>
 
@@ -143,6 +145,26 @@
           <div class="panel-head wrap"><div><h3>Grafik Kehadiran</h3><p>Visualisasi data berdasarkan periode.</p></div><div class="button-row"><select id="chartPeriod"><option value="daily">Harian</option><option value="weekly">Mingguan</option><option value="monthly">Bulanan</option><option value="semester">Semesteran</option></select><input type="date" id="chartDate"><button class="btn dark" id="loadChartBtn">Muat Grafik</button></div></div>
           <div class="chart-card"><canvas id="attendanceChart"></canvas></div>
           <div class="chart-card"><canvas id="worshipChart"></canvas></div>
+        </article>
+      </section>
+
+      <section class="page" id="page-hafalan">
+        <article class="panel">
+          <div class="panel-head wrap"><div><h3>Laporan Hafalan</h3><p>Pilih kelas, siswa, tanggal, agama, dan setoran kemudian klik Simpan.</p></div><button class="btn primary" id="printHafalanPdfBtn">▤ Cetak PDF</button></div>
+          <div class="filterbar multi hafalan-filters">
+            <select id="hafalanClass"><option value="">Pilih kelas</option></select>
+            <select id="hafalanStudent"><option value="">Pilih nama siswa</option></select>
+            <input type="date" id="hafalanDate">
+            <select id="hafalanReligion">
+              <option value="">Pilih agama</option>
+              <option>Islam</option><option>Hindu</option><option>Katolik</option><option>Kristen</option><option>Budha</option>
+            </select>
+            <select id="hafalanSetoran"><option value="">Pilih setoran</option></select>
+            <button class="btn primary" id="saveHafalanBtn">✓ Simpan</button>
+            <button class="btn dark" id="loadHafalanBtn">Tampilkan Laporan</button>
+          </div>
+          <div class="recap-kpis"><span>Total setoran: <strong id="hafalanTotal">0</strong></span><span>Rentang: <strong id="hafalanRange">-</strong></span></div>
+          <div class="table-wrap"><table><thead><tr><th>No</th><th>Tanggal</th><th>Kelas</th><th>NIS/NISN</th><th>Nama</th><th>Agama</th><th>Setoran</th></tr></thead><tbody id="hafalanBody"></tbody></table></div>
         </article>
       </section>
 
