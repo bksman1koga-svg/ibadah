@@ -1,10 +1,18 @@
-const WORSHIPS = ['Duha','Dhuhur','Jumat','Rohin','Rokat','Rokris','Tarbiyah'];
+const WORSHIPS = ['Duha','Dhuhur','Jumat','Rohin','Rokat','Rokris','Budha','Tarbiyah'];
+const RELIGIONS = ['Islam','Hindu','Katolik','Kristen','Budha'];
+const HAFALAN_OPTIONS = {
+  Islam: ['Iftitah','Ketika ruku / sujud','Ketika i’tidal','Duduk diantara dua sujud','Tasyahud awal','Sholawat','Tasyahud akhir','Doa dzikir','Doa setelah sholat','Doa orangtua','Doa masuk kerumah','Doa keluar rumah','Doa berangkat ke sekolah','Doa naik kendaraan','Doa mulai belajar','Doa selesai belajar','Doa sebelum berwudhu','Doa sesudah berwudhu','Doa masuk masjid','Doa keluar masjid','Doa setelah adzan','Doa memakai pakaian','Doa bercermin','Doa melepas pakaian','Doa sebelum makan','Doa setelah makan','Doa berbuka puasa','Doa akan tidur','Doa bangun tidur','Doa masuk wc','Doa keluar wc','Sholat shubuh','Sholat dhuhur','Sholat ashar','Sholat magrib','Sholat isya','Sholat dhuha','Sholat tahajud','Sholat istikharoh','Sholat jenazah','Sholat gerhana','Sholat khouf','Sholat shafar','Sholat tarawih','Sholat witir'],
+  Katolik: ['10 perintah Allah','5 perintah gereja','7 sakramen','Doa malaikat Tuhan dan ratu surga','Doa malam','Doa pagi','Doa sebelum makan','Doa setelah makan','Hukum kasih dengan penerapannya','Memimpin do’a rosario','Memimpin ibadat sabda/doa lingkungan','Pengakuan dosa','Syahadat singkat'],
+  Kristen: ['10 Perintah Allah','Doa Bapa Kami','Doa Syafaat','Pengakuan Iman','Renungan','Sebutkan Dan Menjelaskan Buah Roh'],
+  Hindu: ['Doa Akan Beraktivitas','Doa Bangun Pagi','Doa Mencuci Muka','Doa Berkumur','Doa Mandi','Doa Memohon Ampunan','Doa Mengenakan Pakaian','Doa Menggosok Gigi','Doa Mulai Belajar','Doa Orang Meninggal','Doa Sebelum Makan','Doa Sesudah Makan','Persembahyangan Secara Berurutan'],
+  Budha: ['Doa Kepada Tuhan Yang Maha Esa','Doa Keselamatan “Pattumodana Paritta”','Doa Melancarkan Rejeki','Doa Mohon Kebahagiaan','Doa Mohon Kesuksesan','Doa Sebelum Makan','Doa Sebelum Tidur','Doa Setelah Makan','Doa Untuk Orang Tua','Jinapanjara Gatha','Paritta Namaskara Gatha']
+};
 const state = {
   apiUrl: localStorage.getItem('absensi_api_url') || '',
   students: [], filteredStudents: [], studentPage: 1, pageSize: 25,
   selectedWorship: '', scanner: null, scanning: false, scanLocked: false,
   settings: { school:'SMAN 1 Kota Gajah', principal:'', principalNip:'', teachers:[], selectedTeacher:{name:'',nip:''}, logo:'', principalSignature:'', teacherSignature:'' },
-  recap: [], charts: []
+  recap: [], charts: [], hafalan: []
 };
 const $ = (id) => document.getElementById(id);
 const qs = (s, root=document) => root.querySelector(s);
@@ -52,10 +60,11 @@ async function api(action,payload={}){
 function navigate(page){
   qsa('.page').forEach(x=>x.classList.remove('active')); qsa('.nav-item').forEach(x=>x.classList.remove('active'));
   $(`page-${page}`).classList.add('active'); qs(`.nav-item[data-page="${page}"]`)?.classList.add('active');
-  const titles={dashboard:'Dashboard',students:'Data Siswa',attendance:'Absen Ibadah',recap:'Rekap Absen',charts:'Grafik',settings:'Setting'};
+  const titles={dashboard:'Dashboard',students:'Data Siswa',attendance:'Absen Ibadah',recap:'Rekap Absen',charts:'Grafik',hafalan:'Laporan Hafalan',settings:'Setting'};
   $('pageTitle').textContent=titles[page]; $('sidebar').classList.remove('open');
   if(page==='students' && !state.students.length && state.apiUrl) loadStudents();
   if(page==='settings') fillSettingsForm();
+  if(page==='hafalan'){ initHafalanForm(); if(state.apiUrl) loadHafalanReport(true); }
 }
 
 function qrText(nis){ return `SMAN1KG:${String(nis).trim()}`; }
@@ -171,6 +180,7 @@ function printRecapPdf(){
   doc.setDrawColor(90,110,108);doc.line(leftX,yLine,leftX+55,yLine);doc.line(rightX,yLine,rightX+55,yLine);
   doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text(state.settings.principal||'-',leftX,yName);doc.text(state.settings.selectedTeacher?.name||'-',rightX,yName);doc.setFont(undefined,'normal');
   doc.text(`NIP. ${state.settings.principalNip||'-'}`,leftX,yNip);doc.text(`NIP. ${state.settings.selectedTeacher?.nip||'-'}`,rightX,yNip);
+  doc.setFontSize(7);doc.setFont(undefined,'normal');doc.setTextColor(100,100,100);doc.text('Created by Akhmad Khafidz K., S.Pd., Gr.',14,207);doc.setTextColor(0,0,0);
   doc.save(`Rekap_Absensi_${isoDate()}.pdf`);
 }
 
@@ -181,6 +191,40 @@ async function loadCharts(){
     attendanceChart=new Chart($('attendanceChart'),{type:'bar',data:{labels:d.labels,datasets:[{label:'Jumlah Absensi',data:d.values,backgroundColor:['#0f766e','#14b8a6','#2dd4bf','#5eead4','#99f6e4','#0d9488','#115e59']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:`Tren Kehadiran (${d.range})`},legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
     worshipChart=new Chart($('worshipChart'),{type:'doughnut',data:{labels:WORSHIPS,datasets:[{data:WORSHIPS.map(w=>d.byWorship[w]||0),backgroundColor:['#0f766e','#2563eb','#f59e0b','#7c3aed','#e11d48','#0891b2']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:'Komposisi per Jenis Ibadah'},legend:{position:'bottom'}}}});
   }catch(e){toast(e.message,'error');}finally{loading(false);}
+}
+
+function initHafalanForm(){
+  const classes=[...new Set(state.students.map(s=>s.className).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
+  const cls=$('hafalanClass'); if(!cls)return; const current=cls.value; cls.innerHTML='<option value="">Pilih kelas</option>'+classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join(''); if(classes.includes(current))cls.value=current;
+  if(!$('hafalanDate').value)$('hafalanDate').value=isoDate();
+  updateHafalanStudents(); updateHafalanSetoran();
+}
+function updateHafalanStudents(){
+  const cls=$('hafalanClass')?.value||''; const sel=$('hafalanStudent'); if(!sel)return; const list=state.students.filter(s=>!cls||s.className===cls); const current=sel.value; sel.innerHTML='<option value="">Pilih nama siswa</option>'+list.map(s=>`<option value="${esc(s.nis)}">${esc(s.name)} — ${esc(s.nis)}</option>`).join(''); if(list.some(s=>s.nis===current))sel.value=current;
+}
+function updateHafalanSetoran(){
+  const agama=$('hafalanReligion')?.value||''; const sel=$('hafalanSetoran'); if(!sel)return; const current=sel.value; const opts=HAFALAN_OPTIONS[agama]||[]; sel.innerHTML='<option value="">Pilih setoran</option>'+opts.map((x,i)=>`<option value="${esc(x)}">${i+1}. ${esc(x)}</option>`).join(''); if(opts.includes(current))sel.value=current;
+}
+async function saveHafalan(){
+  const cls=$('hafalanClass').value,nis=$('hafalanStudent').value,date=$('hafalanDate').value,agama=$('hafalanReligion').value,setoran=$('hafalanSetoran').value;
+  if(!cls||!nis||!date||!agama||!setoran)return toast('Lengkapi kelas, siswa, tanggal, agama, dan setoran.','error');
+  try{loading(true,'Menyimpan setoran hafalan...');const r=await api('saveHafalan',{className:cls,nis,date,religion:agama,setoran});toast(r.data.message||'Laporan hafalan tersimpan.');await loadHafalanReport(true);}catch(e){toast(e.message,'error');}finally{loading(false);}
+}
+async function loadHafalanReport(silent=false){
+  if(!state.apiUrl)return;
+  const p={className:$('hafalanClass')?.value||'',nis:$('hafalanStudent')?.value||'',date:$('hafalanDate')?.value||'',religion:$('hafalanReligion')?.value||'',setoran:$('hafalanSetoran')?.value||''};
+  try{if(!silent)loading(true,'Memuat laporan hafalan...');const r=await api('getHafalanReport',p);const d=r.data;state.hafalan=d.rows||[];$('hafalanTotal').textContent=d.total||0;$('hafalanRange').textContent=d.range||'-';$('hafalanBody').innerHTML=state.hafalan.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.date)}</td><td>${esc(x.className)}</td><td>${esc(x.nis)}</td><td>${esc(x.name)}</td><td><span class="badge">${esc(x.religion)}</span></td><td>${esc(x.setoran)}</td></tr>`).join('')||'<tr><td colspan="7">Belum ada data hafalan.</td></tr>';}catch(e){if(!silent)toast(e.message,'error');}finally{if(!silent)loading(false);}
+}
+function printHafalanPdf(){
+  if(!state.hafalan?.length)return toast('Tampilkan laporan hafalan terlebih dahulu.','error');
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  doc.setFontSize(15);doc.text(`Laporan Hafalan - ${state.settings.school}`,14,14);doc.setFontSize(9);doc.text(`Periode: ${$('hafalanDate').value||'-'} | Dicetak: ${fmtDate()} ${new Date().toLocaleTimeString('id-ID',{hour12:false})}`,14,20);
+  doc.autoTable({startY:25,head:[['No','Tanggal','Kelas','NIS/NISN','Nama','Agama','Setoran']],body:state.hafalan.map((x,i)=>[i+1,x.date,x.className,x.nis,x.name,x.religion,x.setoran]),styles:{fontSize:7},headStyles:{fillColor:[15,118,110]},margin:{left:14,right:14,bottom:48}});
+  const yLabel=170,yLine=190,yName=196,yNip=202,leftX=20,rightX=225; doc.setFontSize(10);doc.text('Kepala Sekolah',leftX,yLabel);doc.text('Guru Agama',rightX,yLabel);
+  const sigH=18,sigW=55;if(state.settings.principalSignature){try{doc.addImage(state.settings.principalSignature,'PNG',leftX,yLine-sigH-2,sigW,sigH,undefined,'FAST');}catch(e){}}if(state.settings.teacherSignature){try{doc.addImage(state.settings.teacherSignature,'PNG',rightX,yLine-sigH-2,sigW,sigH,undefined,'FAST');}catch(e){}}
+  doc.setDrawColor(90,110,108);doc.line(leftX,yLine,leftX+55,yLine);doc.line(rightX,yLine,rightX+55,yLine);doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text(state.settings.principal||'-',leftX,yName);doc.text(state.settings.selectedTeacher?.name||'-',rightX,yName);doc.setFont(undefined,'normal');doc.text(`NIP. ${state.settings.principalNip||'-'}`,leftX,yNip);doc.text(`NIP. ${state.settings.selectedTeacher?.nip||'-'}`,rightX,yNip);
+  doc.setFontSize(7);doc.setFont(undefined,'normal');doc.setTextColor(100,100,100);doc.text('Created by Akhmad Khafidz K., S.Pd., Gr.',14,207);doc.setTextColor(0,0,0);
+  doc.save(`Laporan_Hafalan_${isoDate()}.pdf`);
 }
 
 function addTeacherRow(t={name:'',nip:''}){ const row=document.createElement('div');row.className='teacher-row';row.innerHTML=`<input class="teacher-name" placeholder="Nama guru" value="${esc(t.name)}"><input class="teacher-nip" placeholder="NIP" value="${esc(t.nip)}"><button class="btn danger" type="button">Hapus</button>`;row.querySelector('button').onclick=()=>{row.remove();refreshTeacherSelect();};$('teachersList').appendChild(row);refreshTeacherSelect(); }
@@ -214,11 +258,11 @@ function bindEvents(){
   $('downloadTemplateBtn').onclick=downloadTemplate;$('uploadExcelBtn').onclick=()=>$('excelInput').click();$('excelInput').onchange=e=>e.target.files[0]&&importExcel(e.target.files[0]);
   $('downloadClassQrBtn').onclick=()=>{if(!state.students.length)return toast('Muat data siswa terlebih dahulu.','error');openModal('classQrModal');};$('confirmClassQrBtn').onclick=downloadClassQr;$('printQrBtn').onclick=printAllCards;
   $('startScanBtn').onclick=startScanner;$('stopScanBtn').onclick=stopScanner;$('manualAttendBtn').onclick=()=>{const nis=$('manualNis').value.trim();submitAttendance(nis);$('manualNis').value='';};$('manualNis').addEventListener('keydown',e=>{if(e.key==='Enter')$('manualAttendBtn').click()});
-  $('loadRecapBtn').onclick=loadRecap;$('printPdfBtn').onclick=printRecapPdf;$('loadChartBtn').onclick=loadCharts;
+  $('loadRecapBtn').onclick=loadRecap;$('printPdfBtn').onclick=printRecapPdf;$('loadChartBtn').onclick=loadCharts;$('hafalanClass').onchange=()=>{updateHafalanStudents();loadHafalanReport(true)};$('hafalanReligion').onchange=()=>{updateHafalanSetoran();loadHafalanReport(true)};$('hafalanStudent').onchange=()=>loadHafalanReport(true);$('hafalanDate').onchange=()=>loadHafalanReport(true);$('hafalanSetoran').onchange=()=>loadHafalanReport(true);$('saveHafalanBtn').onclick=saveHafalan;$('loadHafalanBtn').onclick=()=>loadHafalanReport(false);$('printHafalanPdfBtn').onclick=printHafalanPdf;
   $('addTeacherBtn').onclick=()=>addTeacherRow();$('teachersList').addEventListener('input',refreshTeacherSelect);$('saveSettingsBtn').onclick=saveSettings;$('testApiBtn').onclick=testApi;$('logoInput').onchange=async e=>{try{const data=await readLogo(e.target.files[0]);$('logoPreview').src=data;$('logoPreview').hidden=false;$('logoPlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};$('principalSignatureInput').onchange=async e=>{try{const data=await readSignature(e.target.files[0]);$('principalSignatureImg').src=data;$('principalSignatureImg').hidden=false;$('principalSignaturePlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};$('teacherSignatureInput').onchange=async e=>{try{const data=await readSignature(e.target.files[0]);$('teacherSignatureImg').src=data;$('teacherSignatureImg').hidden=false;$('teacherSignaturePlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};
 }
 
 document.addEventListener('DOMContentLoaded',async()=>{
-  $('todayLabel').textContent=fmtDate();$('dashboardDate').textContent=fmtDate();$('recapDate').value=isoDate();$('chartDate').value=isoDate();renderWorshipButtons();bindEvents();applySchoolBrand();fillSettingsForm();
+  $('todayLabel').textContent=fmtDate();$('dashboardDate').textContent=fmtDate();$('recapDate').value=isoDate();$('chartDate').value=isoDate();$('hafalanDate').value=isoDate();renderWorshipButtons();bindEvents();applySchoolBrand();fillSettingsForm();initHafalanForm();
   if(state.apiUrl){ await loadDashboard(); setInterval(()=>{ if(document.visibilityState==='visible')loadDashboard(true); },30000); }
 });
