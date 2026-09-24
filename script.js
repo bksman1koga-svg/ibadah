@@ -2,7 +2,7 @@ const WORSHIPS = ['Duha','Dhuhur','Jumat','Rohin','Rokat','Rokris','Budha','Tarb
 const RELIGIONS = ['Islam','Hindu','Katolik','Kristen','Budha'];
 const HAFALAN_OPTIONS = {
   Islam: ['Iftitah','Ketika ruku / sujud','Ketika i’tidal','Duduk diantara dua sujud','Tasyahud awal','Sholawat','Tasyahud akhir','Doa dzikir','Doa setelah sholat','Doa orangtua','Doa masuk kerumah','Doa keluar rumah','Doa berangkat ke sekolah','Doa naik kendaraan','Doa mulai belajar','Doa selesai belajar','Doa sebelum berwudhu','Doa sesudah berwudhu','Doa masuk masjid','Doa keluar masjid','Doa setelah adzan','Doa memakai pakaian','Doa bercermin','Doa melepas pakaian','Doa sebelum makan','Doa setelah makan','Doa berbuka puasa','Doa akan tidur','Doa bangun tidur','Doa masuk wc','Doa keluar wc','Sholat shubuh','Sholat dhuhur','Sholat ashar','Sholat magrib','Sholat isya','Sholat dhuha','Sholat tahajud','Sholat istikharoh','Sholat jenazah','Sholat gerhana','Sholat khouf','Sholat shafar','Sholat tarawih','Sholat witir'],
-  Katolik: ['10 perintah Allah','5 perintah gereja','7 sakramen','Doa malaikat Tuhan dan ratu surga','Doa malam','Doa pagi','Doa sebelum makan','Doa setelah makan','Hukum kasih dengan penerapannya','Memimpin do’a rosario','Memimpin ibadat sabda/doa lingkungan','Pengakuan dosa','Syahadat singkat'],
+  Katolik: ['10 perintah Allah','5 perintah gereja','7 sakramen','Doa malaikat Tuhan dan ratu surga','Doa malam','Doa pagi','Doa sebelum makan','Doa setelah makan','Hukum kasih dengan penerapannya','Memimpin do’a rosario','Memimpin ibadat sabda/doa lingkungan','Pengakuan dosa','Syahadat singkat','Jawaban-jawaban misa/ekaristi','Perlengkapan Liturgi'],
   Kristen: ['10 Perintah Allah','Doa Bapa Kami','Doa Syafaat','Pengakuan Iman','Renungan','Sebutkan Dan Menjelaskan Buah Roh'],
   Hindu: ['Doa Akan Beraktivitas','Doa Bangun Pagi','Doa Mencuci Muka','Doa Berkumur','Doa Mandi','Doa Memohon Ampunan','Doa Mengenakan Pakaian','Doa Menggosok Gigi','Doa Mulai Belajar','Doa Orang Meninggal','Doa Sebelum Makan','Doa Sesudah Makan','Persembahyangan Secara Berurutan'],
   Budha: ['Doa Kepada Tuhan Yang Maha Esa','Doa Keselamatan “Pattumodana Paritta”','Doa Melancarkan Rejeki','Doa Mohon Kebahagiaan','Doa Mohon Kesuksesan','Doa Sebelum Makan','Doa Sebelum Tidur','Doa Setelah Makan','Doa Untuk Orang Tua','Jinapanjara Gatha','Paritta Namaskara Gatha']
@@ -208,7 +208,7 @@ function updateHafalanSetoran(){
 async function saveHafalan(){
   const cls=$('hafalanClass').value,nis=$('hafalanStudent').value,date=$('hafalanDate').value,agama=$('hafalanReligion').value,setoran=$('hafalanSetoran').value;
   if(!cls||!nis||!date||!agama||!setoran)return toast('Lengkapi kelas, siswa, tanggal, agama, dan setoran.','error');
-  try{loading(true,'Menyimpan setoran hafalan...');const r=await api('saveHafalan',{className:cls,nis,date,religion:agama,setoran});toast(r.data.message||'Laporan hafalan tersimpan.');await loadHafalanReport(true);}catch(e){toast(e.message,'error');}finally{loading(false);}
+  try{loading(true,'Menyimpan setoran hafalan...');const r=await api('saveHafalan',{className:cls,nis,date,religion:agama,setoran});toast(r.data.message||'Laporan hafalan tersimpan.');await loadHafalanReport(true);}catch(e){const msg=String(e.message||e);if(msg.includes('Action tidak dikenali: saveHafalan')){toast('API Google Sheets masih versi lama. Update/deploy ulang Code.gs versi 1.4.1, lalu gunakan URL /exec terbaru di Setting.','error');}else{toast(msg,'error');}}finally{loading(false);}
 }
 async function loadHafalanReport(silent=false){
   if(!state.apiUrl)return;
