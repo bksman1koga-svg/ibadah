@@ -27,6 +27,7 @@
         <button class="nav-item" data-page="recap">▤ <span>Rekap Absen</span></button>
         <button class="nav-item" data-page="charts">◒ <span>Grafik</span></button>
         <button class="nav-item" data-page="hafalan">▥ <span>Laporan Hafalan</span></button>
+        <button class="nav-item" data-page="progres">◉ <span>Progres Hafalan</span></button>
         <button class="nav-item" data-page="settings">⚙ <span>Setting</span></button>
       </nav>
       <div class="sidebar-foot">
@@ -165,6 +166,16 @@
           </div>
           <div class="recap-kpis"><span>Total setoran: <strong id="hafalanTotal">0</strong></span><span>Rentang: <strong id="hafalanRange">-</strong></span></div>
           <div class="table-wrap"><table><thead><tr><th>No</th><th>Tanggal</th><th>Kelas</th><th>NIS/NISN</th><th>Nama</th><th>Agama</th><th>Setoran</th></tr></thead><tbody id="hafalanBody"></tbody></table></div>
+        </article>
+      </section>
+
+      <section class="page" id="page-progres">
+        <article class="panel">
+          <div class="panel-head wrap"><div><h3>Progres Hafalan</h3><p>Persentase dihitung dari 36 surat yang tercatat pada setoran hafalan agama Islam. Klik nama siswa untuk melihat rincian dan total setoran.</p></div><button class="btn dark" id="refreshProgresBtn">Muat Progres</button></div>
+          <div class="filterbar multi"><select id="progresClass"><option value="">Semua kelas</option></select><input id="progresSearch" placeholder="Cari nama siswa..."></div>
+          <div class="recap-kpis"><span>Jumlah siswa: <strong id="progresStudentTotal">0</strong></span><span>Total setoran: <strong id="progresRecordTotal">0</strong></span></div>
+          <div class="table-wrap"><table><thead><tr><th>No</th><th>Kelas</th><th>Nama Siswa</th><th>Tanggal Hafalan Terakhir</th><th>Persentase Hafalan</th><th>Total Hafalan</th></tr></thead><tbody id="progresBody"><tr><td colspan="6">Klik Muat Progres untuk menampilkan data.</td></tr></tbody></table></div>
+          <div id="progresDetail" class="notice" hidden></div>
         </article>
       </section>
 
