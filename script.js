@@ -1,7 +1,7 @@
 const WORSHIPS = ['Duha','Dhuhur','Jumat','Rohin','Rokat','Rokris','Budha','Tarbiyah'];
 const RELIGIONS = ['Islam','Hindu','Katolik','Kristen','Budha'];
 const HAFALAN_OPTIONS = {
-  Islam: ['Iftitah','Ketika ruku / sujud','Ketika i’tidal','Duduk diantara dua sujud','Tasyahud awal','Sholawat','Tasyahud akhir','Doa dzikir','Doa setelah sholat','Doa orangtua','Doa masuk kerumah','Doa keluar rumah','Doa berangkat ke sekolah','Doa naik kendaraan','Doa mulai belajar','Doa selesai belajar','Doa sebelum berwudhu','Doa sesudah berwudhu','Doa masuk masjid','Doa keluar masjid','Doa setelah adzan','Doa memakai pakaian','Doa bercermin','Doa melepas pakaian','Doa sebelum makan','Doa setelah makan','Doa berbuka puasa','Doa akan tidur','Doa bangun tidur','Doa masuk wc','Doa keluar wc','Sholat shubuh','Sholat dhuhur','Sholat ashar','Sholat magrib','Sholat isya','Sholat dhuha','Sholat tahajud','Sholat istikharoh','Sholat jenazah','Sholat gerhana','Sholat khouf','Sholat shafar','Sholat tarawih','Sholat witir'],
+  Islam: ["Surat An-Naba'", "Surat An-Nazi'at", "Surat 'Abasa", "Surat At-Takwir", "Surat Al-Infitar", "Surat Al-Muthaffifin", "Surat Al-Insyiqaq", "Surat Al-Buruj", "Surat At-Tariq", "Surat Al-A'la", "Surat Al-Ghasyiyah", "Surat Al-Fajr", "Surat Al-Balad", "Surat Asy-Syams", "Surat Al-Lail", "Surat Ad-Duha", "Surat Al-Insyirah / Al-Sharh", "Surat At-Tin", "Surat Al-'Alaq", "Surat Al-Qadr", "Surat Al-Bayyinah", "Surat Az-Zalzalah", "Surat Al-'Adiyat", "Surat Al-Qari'ah", "Surat At-Takasur", "Surat Al-'Asr", "Surat Al-Humazah", "Surat Al-Fil", "Surat Quraisy", "Surat Al-Ma'un", "Surat Al-Kautsar", "Surat Al-Kafirun", "Surat An-Nasr", "Surat Al-Lahab", "Surat Al-Ikhlas", "Surat Al-Falaq", "Iftitah", "Ketika ruku / sujud", "Ketika i’tidal", "Duduk diantara dua sujud", "Tasyahud awal", "Sholawat", "Tasyahud akhir", "Doa dzikir", "Doa setelah sholat", "Doa orangtua", "Doa masuk kerumah", "Doa keluar rumah", "Doa berangkat ke sekolah", "Doa naik kendaraan", "Doa mulai belajar", "Doa selesai belajar", "Doa sebelum berwudhu", "Doa sesudah berwudhu", "Doa masuk masjid", "Doa keluar masjid", "Doa setelah adzan", "Doa memakai pakaian", "Doa bercermin", "Doa melepas pakaian", "Doa sebelum makan", "Doa setelah makan", "Doa berbuka puasa", "Doa akan tidur", "Doa bangun tidur", "Doa masuk wc", "Doa keluar wc", "Sholat shubuh", "Sholat dhuhur", "Sholat ashar", "Sholat magrib", "Sholat isya", "Sholat dhuha", "Sholat tahajud", "Sholat istikharoh", "Sholat jenazah", "Sholat gerhana", "Sholat khouf", "Sholat shafar", "Sholat tarawih", "Sholat witir"],
   Katolik: ['10 perintah Allah','5 perintah gereja','7 sakramen','Doa malaikat Tuhan dan ratu surga','Doa malam','Doa pagi','Doa sebelum makan','Doa setelah makan','Hukum kasih dengan penerapannya','Memimpin do’a rosario','Memimpin ibadat sabda/doa lingkungan','Pengakuan dosa','Syahadat singkat','Jawaban-jawaban misa/ekaristi','Perlengkapan Liturgi'],
   Kristen: ['10 Perintah Allah','Doa Bapa Kami','Doa Syafaat','Pengakuan Iman','Renungan','Sebutkan Dan Menjelaskan Buah Roh'],
   Hindu: ['Doa Akan Beraktivitas','Doa Bangun Pagi','Doa Mencuci Muka','Doa Berkumur','Doa Mandi','Doa Memohon Ampunan','Doa Mengenakan Pakaian','Doa Menggosok Gigi','Doa Mulai Belajar','Doa Orang Meninggal','Doa Sebelum Makan','Doa Sesudah Makan','Persembahyangan Secara Berurutan'],
@@ -60,11 +60,12 @@ async function api(action,payload={}){
 function navigate(page){
   qsa('.page').forEach(x=>x.classList.remove('active')); qsa('.nav-item').forEach(x=>x.classList.remove('active'));
   $(`page-${page}`).classList.add('active'); qs(`.nav-item[data-page="${page}"]`)?.classList.add('active');
-  const titles={dashboard:'Dashboard',students:'Data Siswa',attendance:'Absen Ibadah',recap:'Rekap Absen',charts:'Grafik',hafalan:'Laporan Hafalan',settings:'Setting'};
+  const titles={dashboard:'Dashboard',students:'Data Siswa',attendance:'Absen Ibadah',recap:'Rekap Absen',charts:'Grafik',hafalan:'Laporan Hafalan',progres:'Progres Hafalan',settings:'Setting'};
   $('pageTitle').textContent=titles[page]; $('sidebar').classList.remove('open');
   if(page==='students' && !state.students.length && state.apiUrl) loadStudents();
   if(page==='settings') fillSettingsForm();
   if(page==='hafalan'){ initHafalanForm(); if(state.apiUrl) loadHafalanReport(true); }
+  if(page==='progres' && state.apiUrl) loadProgresHafalan();
 }
 
 function qrText(nis){ return `SMAN1KG:${String(nis).trim()}`; }
@@ -215,6 +216,34 @@ async function loadHafalanReport(silent=false){
   const p={className:$('hafalanClass')?.value||'',nis:$('hafalanStudent')?.value||'',date:$('hafalanDate')?.value||'',religion:$('hafalanReligion')?.value||'',setoran:$('hafalanSetoran')?.value||''};
   try{if(!silent)loading(true,'Memuat laporan hafalan...');const r=await api('getHafalanReport',p);const d=r.data;state.hafalan=d.rows||[];$('hafalanTotal').textContent=d.total||0;$('hafalanRange').textContent=d.range||'-';$('hafalanBody').innerHTML=state.hafalan.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.date)}</td><td>${esc(x.className)}</td><td>${esc(x.nis)}</td><td>${esc(x.name)}</td><td><span class="badge">${esc(x.religion)}</span></td><td>${esc(x.setoran)}</td></tr>`).join('')||'<tr><td colspan="7">Belum ada data hafalan.</td></tr>';}catch(e){if(!silent)toast(e.message,'error');}finally{if(!silent)loading(false);}
 }
+async function loadProgresHafalan(){
+  if(!state.apiUrl)return;
+  try{
+    loading(true,'Menghitung progres hafalan...');
+    if(!state.students.length) await loadStudents();
+    const r=await api('getHafalanReport',{}); const rows=r.data.rows||[];
+    const classes=[...new Set(state.students.map(s=>s.className).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
+    const classSel=$('progresClass'),current=classSel.value;
+    classSel.innerHTML='<option value="">Semua kelas</option>'+classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join(''); if(classes.includes(current))classSel.value=current;
+    state.progresRows=rows; renderProgresHafalan();
+  }catch(e){toast(e.message,'error');}finally{loading(false);}
+}
+function renderProgresHafalan(){
+  const rows=state.progresRows||[],cls=$('progresClass').value,search=($('progresSearch').value||'').toLowerCase();
+  const students=state.students.filter(s=>(!cls||s.className===cls)&&(!search||s.name.toLowerCase().includes(search)||s.nis.toLowerCase().includes(search)));
+  const surahList=HAFALAN_OPTIONS.Islam.filter(x=>x.startsWith('Surat '));
+  const data=students.map(st=>{const rec=rows.filter(x=>x.nis===st.nis);const surahDone=new Set(rec.filter(x=>x.religion==='Islam'&&surahList.includes(x.setoran)).map(x=>x.setoran));const dated=rec.map(x=>x.date).filter(Boolean).sort((a,b)=>b.localeCompare(a));return {...st,total:rec.length,latest:dated[0]||'-',percent:Math.round(surahDone.size/surahList.length*100),surahCount:surahDone.size,records:rec};});
+  $('progresStudentTotal').textContent=data.length;$('progresRecordTotal').textContent=data.reduce((n,x)=>n+x.total,0);
+  $('progresBody').innerHTML=data.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.className)}</td><td><button class="btn secondary progres-student" data-nis="${esc(x.nis)}">${esc(x.name)}</button></td><td>${esc(x.latest)}</td><td><span class="badge">${x.percent}%</span><div class="bar" style="margin-top:6px;min-width:90px"><i style="width:${x.percent}%"></i></div></td><td>${x.total}</td></tr>`).join('')||'<tr><td colspan="6">Data siswa tidak ditemukan.</td></tr>';
+  qsa('.progres-student').forEach(b=>b.onclick=()=>showProgresDetail(b.dataset.nis));
+}
+function showProgresDetail(nis){
+  const rows=state.progresRows||[],st=state.students.find(s=>s.nis===nis);if(!st)return;
+  const rec=rows.filter(x=>x.nis===nis).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const surahList=HAFALAN_OPTIONS.Islam.filter(x=>x.startsWith('Surat '));const done=[...new Set(rec.filter(x=>x.religion==='Islam'&&surahList.includes(x.setoran)).map(x=>x.setoran))];
+  const detail=$('progresDetail');detail.hidden=false;detail.innerHTML=`<strong>Rincian Hafalan: ${esc(st.name)} — ${esc(st.className)}</strong><p>Total hafalan/setoran dari data yang diinput: <strong>${rec.length}</strong></p><p>Surat Islam yang sudah disetorkan: <strong>${done.length} dari ${surahList.length} (${Math.round(done.length/surahList.length*100)}%)</strong></p><p>Daftar setoran: ${rec.length?rec.map(x=>`${esc(x.date)} — ${esc(x.religion)} — ${esc(x.setoran)}`).join('<br>'):'Belum ada setoran hafalan.'}</p>`;
+}
+
 function printHafalanPdf(){
   if(!state.hafalan?.length)return toast('Tampilkan laporan hafalan terlebih dahulu.','error');
   const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
@@ -258,7 +287,7 @@ function bindEvents(){
   $('downloadTemplateBtn').onclick=downloadTemplate;$('uploadExcelBtn').onclick=()=>$('excelInput').click();$('excelInput').onchange=e=>e.target.files[0]&&importExcel(e.target.files[0]);
   $('downloadClassQrBtn').onclick=()=>{if(!state.students.length)return toast('Muat data siswa terlebih dahulu.','error');openModal('classQrModal');};$('confirmClassQrBtn').onclick=downloadClassQr;$('printQrBtn').onclick=printAllCards;
   $('startScanBtn').onclick=startScanner;$('stopScanBtn').onclick=stopScanner;$('manualAttendBtn').onclick=()=>{const nis=$('manualNis').value.trim();submitAttendance(nis);$('manualNis').value='';};$('manualNis').addEventListener('keydown',e=>{if(e.key==='Enter')$('manualAttendBtn').click()});
-  $('loadRecapBtn').onclick=loadRecap;$('printPdfBtn').onclick=printRecapPdf;$('loadChartBtn').onclick=loadCharts;$('hafalanClass').onchange=()=>{updateHafalanStudents();loadHafalanReport(true)};$('hafalanReligion').onchange=()=>{updateHafalanSetoran();loadHafalanReport(true)};$('hafalanStudent').onchange=()=>loadHafalanReport(true);$('hafalanDate').onchange=()=>loadHafalanReport(true);$('hafalanSetoran').onchange=()=>loadHafalanReport(true);$('saveHafalanBtn').onclick=saveHafalan;$('loadHafalanBtn').onclick=()=>loadHafalanReport(false);$('printHafalanPdfBtn').onclick=printHafalanPdf;
+  $('loadRecapBtn').onclick=loadRecap;$('printPdfBtn').onclick=printRecapPdf;$('loadChartBtn').onclick=loadCharts;$('hafalanClass').onchange=()=>{updateHafalanStudents();loadHafalanReport(true)};$('hafalanReligion').onchange=()=>{updateHafalanSetoran();loadHafalanReport(true)};$('hafalanStudent').onchange=()=>loadHafalanReport(true);$('hafalanDate').onchange=()=>loadHafalanReport(true);$('hafalanSetoran').onchange=()=>loadHafalanReport(true);$('saveHafalanBtn').onclick=saveHafalan;$('loadHafalanBtn').onclick=()=>loadHafalanReport(false);$('printHafalanPdfBtn').onclick=printHafalanPdf;$('refreshProgresBtn').onclick=loadProgresHafalan;$('progresClass').onchange=renderProgresHafalan;$('progresSearch').oninput=renderProgresHafalan;
   $('addTeacherBtn').onclick=()=>addTeacherRow();$('teachersList').addEventListener('input',refreshTeacherSelect);$('saveSettingsBtn').onclick=saveSettings;$('testApiBtn').onclick=testApi;$('logoInput').onchange=async e=>{try{const data=await readLogo(e.target.files[0]);$('logoPreview').src=data;$('logoPreview').hidden=false;$('logoPlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};$('principalSignatureInput').onchange=async e=>{try{const data=await readSignature(e.target.files[0]);$('principalSignatureImg').src=data;$('principalSignatureImg').hidden=false;$('principalSignaturePlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};$('teacherSignatureInput').onchange=async e=>{try{const data=await readSignature(e.target.files[0]);$('teacherSignatureImg').src=data;$('teacherSignatureImg').hidden=false;$('teacherSignaturePlaceholder').hidden=true;}catch(err){toast(err.message,'error')}};
 }
 
